@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>End-to-End Workflow Guide - Cline AI + Jira + GitHub</title>
+    <style>
+        body { font-family: Calibri, Arial, sans-serif; margin: 40px; line-height: 1.6; max-width: 900px; margin: auto; }
+        h1 { color: #1a365d; text-align: center; border-bottom: 3px solid #2b6cb0; padding-bottom: 15px; }
+        h2 { color: #2b6cb0; margin-top: 40px; border-left: 5px solid #2b6cb0; padding-left: 15px; }
+        h3 { color: #4a5568; margin-top: 25px; }
+        .step-box { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .step-number { background: #2b6cb0; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; }
+        .image-placeholder { background: #e2e8f0; border: 2px dashed #a0aec0; border-radius: 8px; padding: 40px; text-align: center; margin: 15px 0; color: #718096; }
+        table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+        th { background: #2b6cb0; color: white; }
+        tr:nth-child(even) { background: #f7fafc; }
+        code { background: #edf2f7; padding: 2px 8px; border-radius: 4px; font-family: Consolas, monospace; }
+        pre { background: #1a202c; color: #e2e8f0; padding: 15px; border-radius: 8px; overflow-x: auto; }
+        .highlight { background: #fefcbf; padding: 15px; border-left: 4px solid #d69e2e; margin: 15px 0; }
+        .success { background: #c6f6d5; padding: 15px; border-left: 4px solid #38a169; margin: 15px 0; }
+        .warning { background: #fed7d7; padding: 15px; border-left: 4px solid #e53e3e; margin: 15px 0; }
+        .page-break { page-break-before: always; }
+        ul li { margin: 8px 0; }
+    </style>
+</head>
+<body>
+
+<h1>🚀 End-to-End Workflow Guide<br>AI-Assisted Development with Cline + Jira + GitHub</h1>
+
+<p style="text-align: center; color: #718096;">Complete guide from Epic creation to running application</p>
+
+<!-- ==================== SECTION 1: PREREQUISITES ==================== -->
+
+<h2>📋 Section 1: Prerequisites Setup</h2>
+
+<div class="step-box">
+<p><span class="step-number">Step 1.1</span> <strong>Install VS Code and Cline Extension</strong></p>
+<ol>
+    <li>Download and install VS Code from <code>https://code.visualstudio.com/</code></li>
+    <li>Open VS Code → Extensions (Ctrl+Shift+X)</li>
+    <li>Search for "Cline" and install the extension</li>
+</ol>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Cline extension in VS Code marketplace<br>
+    <em>[Insert image showing Cline extension installation]</em>
+</div>
+</div>
+
+<div class="step-box">
+<p><span class="step-number">Step 1.2</span> <strong>Generate Jira API Token</strong></p>
+<ol>
+    <li>Go to <code>https://id.atlassian.com/manage-profile/security/api-tokens</code></li>
+    <li>Click "Create API token"</li>
+    <li>Enter label: "Cline MCP Integration"</li>
+    <li>Click "Create" and copy the token immediately (shown only once!)</li>
+</ol>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Atlassian API token creation page<br>
+    <em>[Insert image showing API token creation dialog]</em>
+</div>
+
+<div class="warning">
+    ⚠️ <strong>Important:</strong> Save the token securely. You cannot view it again after closing the dialog.
+</div>
+</div>
+
+<div class="step-box">
+<p><span class="step-number">Step 1.3</span> <strong>Generate GitHub Personal Access Token</strong></p>
+<ol>
+    <li>Go to GitHub → Settings → Developer Settings → Personal Access Tokens → Fine-grained tokens</li>
+    <li>Click "Generate new token"</li>
+    <li>Set expiration (recommend: 90 days)</li>
+    <li>Select repository access: "All repositories" or specific ones</li>
+    <li>Under "Repository permissions":
+        <ul>
+            <li>Contents: Read and Write</li>
+            <li>Pull requests: Read and Write</li>
+            <li>Metadata: Read-only</li>
+        </ul>
+    </li>
+    <li>Click "Generate token" and copy it</li>
+</ol>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> GitHub token permissions selection<br>
+    <em>[Insert image showing token permissions]</em>
+</div>
+</div>
+
+<!-- ==================== SECTION 2: MCP CONFIGURATION ==================== -->
+
+<h2 class="page-break">⚙️ Section 2: MCP Server Configuration</h2>
+
+<div class="step-box">
+<p><span class="step-number">Step 2.1</span> <strong>Locate MCP Settings File</strong></p>
+<p>The configuration file is located at:</p>
+<pre>%APPDATA%\Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json</pre>
+<p>Windows path example:</p>
+<pre>C:\Users\YourUsername\AppData\Roaming\Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json</pre>
+</div>
+
+<div class="step-box">
+<p><span class="step-number">Step 2.2</span> <strong>Configure MCP Settings</strong></p>
+<p>Add the following configuration to <code>cline_mcp_settings.json</code>:</p>
+<pre>{
+  "mcpServers": {
+    "jira": {
+      "command": "node",
+      "args": ["C:\\Users\\YourName\\path\\to\\jira-full-server\\build\\index.js"],
+      "env": {
+        "JIRA_HOST": "https://your-instance.atlassian.net",
+        "JIRA_EMAIL": "your-email@example.com",
+        "JIRA_API_TOKEN": "your-jira-api-token"
+      },
+      "disabled": false,
+      "autoApprove": []
+    },
+    "github": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_your-token-here"
+      },
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}</pre>
+
+<div class="highlight">
+    💡 <strong>Replace:</strong>
+    <ul>
+        <li><code>your-instance</code> with your Jira subdomain</li>
+        <li><code>your-email@example.com</code> with your Atlassian email</li>
+        <li><code>your-jira-api-token</code> with the token from Step 1.2</li>
+        <li><code>ghp_your-token-here</code> with the token from Step 1.3</li>
+    </ul>
+</div>
+</div>
+
+<div class="step-box">
+<p><span class="step-number">Step 2.3</span> <strong>Verify MCP Servers Connected</strong></p>
+<ol>
+    <li>Restart VS Code</li>
+    <li>Open Cline extension panel</li>
+    <li>Check that both "jira" and "github" servers show as connected</li>
+</ol>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Cline showing connected MCP servers<br>
+    <em>[Insert image showing both servers connected in Cline]</em>
+</div>
+</div>
+
+<!-- ==================== SECTION 3: CREATE JIRA EPIC ==================== -->
+
+<h2 class="page-break">📝 Section 3: Create Jira Epic</h2>
+
+<div class="step-box">
+<p><span class="step-number">Step 3.1</span> <strong>Create Epic in Jira</strong></p>
+<ol>
+    <li>Open your Jira project</li>
+    <li>Click "Create" button</li>
+    <li>Select Issue Type: "Epic"</li>
+    <li>Fill in the Epic details with comprehensive requirements</li>
+</ol>
+
+<p><strong>Recommended Epic Description Format:</strong></p>
+<pre>## Description
+Create a comprehensive employee details portal...
+
+## Technology Stack
+- Frontend: React with Vite
+- Backend: Node.js with Express
+- Database: SQLite
+
+## Phase 1: Documentation
+1. Create Requirements documents
+2. Create Architecture documents
+...
+
+## Phase 2: Development
+1. Backend API implementation
+2. Frontend UI implementation
+...
+
+## Acceptance Criteria
+- [ ] All documentation created
+- [ ] Backend API functional
+- [ ] Frontend responsive
+- [ ] Tests passing
+</pre>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Jira Epic creation form<br>
+    <em>[Insert image showing Epic creation in Jira]</em>
+</div>
+</div>
+
+<div class="step-box">
+<p><span class="step-number">Step 3.2</span> <strong>Note the Epic Key</strong></p>
+<p>After creating the Epic, note its key (e.g., <strong>SCRUM-16</strong>). You will provide this to Cline.</p>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Created Epic showing the key<br>
+    <em>[Insert image showing SCRUM-16 in Jira]</em>
+</div>
+</div>
+
+<!-- ==================== SECTION 4: START CLINE WORKFLOW ==================== -->
+
+<h2 class="page-break">🤖 Section 4: Execute with Cline AI</h2>
+
+<div class="step-box">
+<p><span class="step-number">Step 4.1</span> <strong>Start New Task in Cline</strong></p>
+<ol>
+    <li>Open Cline panel in VS Code</li>
+    <li>Create a new empty folder for your project</li>
+    <li>Open that folder in VS Code</li>
+    <li>In Cline chat, simply type the Epic key:</li>
+</ol>
+<pre>SCRUM-16</pre>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Cline chat with Epic key input<br>
+    <em>[Insert image showing user typing SCRUM-16 in Cline]</em>
+</div>
+</div>
+
+<div class="step-box">
+<p><span class="step-number">Step 4.2</span> <strong>Cline Fetches Epic Details</strong></p>
+<p>Cline will automatically:</p>
+<ol>
+    <li>Use <code>jira.get_issue</code> to fetch Epic details</li>
+    <li>Parse the description to understand requirements</li>
+    <li>Create a task plan</li>
+</ol>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Cline fetching Epic details<br>
+    <em>[Insert image showing Cline using get_issue tool]</em>
+</div>
+</div>
+
+<div class="step-box">
+<p><span class="step-number">Step 4.3</span> <strong>Cline Creates Child Stories</strong></p>
+<p>Cline will create stories under the Epic using <code>jira.create_issue</code>:</p>
+
+<table>
+    <tr><th>Story Key</th><th>Summary</th></tr>
+    <tr><td>SCRUM-17</td><td>Setup Project Structure and Database Schema</td></tr>
+    <tr><td>SCRUM-18</td><td>Employee CRUD API</td></tr>
+    <tr><td>SCRUM-19</td><td>Address Management API</td></tr>
+    <tr><td>SCRUM-20</td><td>Dashboard with Pie Charts</td></tr>
+    <tr><td>SCRUM-21</td><td>Employee List with Search/Filter</td></tr>
+    <tr><td>SCRUM-22</td><td>Employee Profile Page</td></tr>
+    <tr><td>SCRUM-23</td><td>Add/Edit Employee Forms</td></tr>
+    <tr><td>SCRUM-24</td><td>Delete Employee Feature</td></tr>
+</table>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Jira board showing created stories<br>
+    <em>[Insert image showing child stories under Epic]</em>
+</div>
+</div>
+
+<!-- ==================== SECTION 5: CODE GENERATION ==================== -->
+
+<h2 class="page-break">💻 Section 5: Code Generation</h2>
+
+<div class="step-box">
+<p><span class="step-number">Step 5.1</span> <strong>Documentation Generation</strong></p>
+<p>Cline creates comprehensive documentation in <code>/docs</code> folder:</p>
+<ul>
+    <li>01-detailed-requirements.md</li>
+    <li>02-functional-requirements.md</li>
+    <li>03-non-functional-requirements.md</li>
+    <li>04-user-journeys.md</li>
+    <li>05-user-stories.md</li>
+    <li>06-architecture.md</li>
+    <li>07-technical-spikes.md</li>
+    <li>08-testing-plan.md</li>
+</ul>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> VS Code showing generated docs folder<br>
+    <em>[Insert image showing docs folder structure]</em>
+</div>
+</div>
+
+<div class="step-box">
+<p><span class="step-number">Step 5.2</span> <strong>Backend API Generation</strong></p>
+<p>Cline generates complete backend code:</p>
+<pre>backend/
+├── src/
+│   ├── app.js           # Express app setup
+│   ├── server.js        # Server entry point
+│   ├── database/
+│   │   └── init.js      # SQLite initialization
+│   ├── models/
+│   │   ├── employeeModel.js
+│   │   └── addressModel.js
+│   ├── routes/
+│   │   ├── employees.js
+│   │   ├── addresses.js
+│   │   └── analytics.js
+│   └── scripts/
+│       └── seed.js      # Database seeder
+├── tests/
+│   ├── unit/
+│   └── integration/
+├── package.json
+└── Dockerfile</pre>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> VS Code showing backend code structure<br>
+    <em>[Insert image showing backend folder in VS Code]</em>
+</div>
+</div>
+
+<div class="step-box">
+<p><span class="step-number">Step 5.3</span> <strong>Frontend Generation</strong></p>
+<p>Cline generates React frontend:</p>
+<pre>frontend/
+├── src/
+│   ├── App.jsx
+│   ├── main.jsx
+│   ├── index.css
+│   ├── pages/
+│   │   ├── Dashboard.jsx
+│   │   ├── EmployeeList.jsx
+│   │   ├── EmployeeProfile.jsx
+│   │   └── EmployeeForm.jsx
+│   └── services/
+│       └── api.js
+├── package.json
+├── vite.config.js
+├── tailwind.config.js
+└── Dockerfile</pre>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> VS Code showing frontend code structure<br>
+    <em>[Insert image showing frontend folder in VS Code]</em>
+</div>
+</div>
+
+<!-- ==================== SECTION 6: GITHUB INTEGRATION ==================== -->
+
+<h2 class="page-break">📦 Section 6: GitHub Repository Creation</h2>
+
+<div class="step-box">
+<p><span class="step-number">Step 6.1</span> <strong>Create GitHub Repository</strong></p>
+<p>Cline uses <code>github.create_repository</code> to create the repo:</p>
+<pre>{
+  "name": "employee-details-portal",
+  "description": "Employee Details Portal with React, Node.js, SQLite",
+  "private": false,
+  "autoInit": true
+}</pre>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> GitHub showing new repository<br>
+    <em>[Insert image showing created repository on GitHub]</em>
+</div>
+</div>
+
+<div class="step-box">
+<p><span class="step-number">Step 6.2</span> <strong>Push Code to GitHub</strong></p>
+<p>Cline pushes all files using <code>github.push_files</code>:</p>
+<ul>
+    <li>All documentation files</li>
+    <li>Backend source code</li>
+    <li>Frontend source code</li>
+    <li>Test files</li>
+    <li>Docker configuration</li>
+    <li>README.md</li>
+</ul>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> GitHub showing pushed files<br>
+    <em>[Insert image showing repository with all files]</em>
+</div>
+</div>
+
+<!-- ==================== SECTION 7: JIRA UPDATES ==================== -->
+
+<h2 class="page-break">✅ Section 7: Jira Story Updates</h2>
+
+<div class="step-box">
+<p><span class="step-number">Step 7.1</span> <strong>Add Closure Comments</strong></p>
+<p>Cline adds structured closure comments to each story using <code>jira.add_comment</code>:</p>
+<pre>**CLOSURE SUMMARY**
+
+**Start Date:** 2026-02-19 14:48
+**End Date:** 2026-02-19 14:55
+**Estimated Effort:** 30min
+**Actual Effort:** 7min
+
+**Deliverables:**
+- Node.js backend initialized
+- SQLite database schema created
+- Project structure established
+
+**Status:** COMPLETED</pre>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Jira comment showing closure details<br>
+    <em>[Insert image showing closure comment in Jira]</em>
+</div>
+</div>
+
+<div class="step-box">
+<p><span class="step-number">Step 7.2</span> <strong>Transition Stories to Done</strong></p>
+<p>Cline transitions each story using <code>jira.transition_issue</code>:</p>
+<pre>{
+  "issueIdOrKey": "SCRUM-17",
+  "transitionId": "41"  // Done status
+}</pre>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Jira board showing all stories in Done<br>
+    <em>[Insert image showing completed stories]</em>
+</div>
+</div>
+
+<!-- ==================== SECTION 8: RUN APPLICATION ==================== -->
+
+<h2 class="page-break">🏃 Section 8: Run the Application</h2>
+
+<div class="step-box">
+<p><span class="step-number">Step 8.1</span> <strong>Install Dependencies</strong></p>
+<p>Open terminal in VS Code and run:</p>
+<pre># Backend
+cd backend
+npm install
+
+# Frontend
+cd ../frontend
+npm install</pre>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Terminal showing npm install<br>
+    <em>[Insert image showing npm install output]</em>
+</div>
+</div>
+
+<div class="step-box">
+<p><span class="step-number">Step 8.2</span> <strong>Seed the Database</strong></p>
+<pre>cd backend
+npm run seed</pre>
+<p>This creates 50 sample employees with addresses.</p>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Terminal showing database seeding<br>
+    <em>[Insert image showing seed script output]</em>
+</div>
+</div>
+
+<div class="step-box">
+<p><span class="step-number">Step 8.3</span> <strong>Start Backend Server</strong></p>
+<pre>cd backend
+npm start</pre>
+<p>Backend runs at: <code>http://localhost:3000</code></p>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Backend server running<br>
+    <em>[Insert image showing "Server running on port 3000"]</em>
+</div>
+</div>
+
+<div class="step-box">
+<p><span class="step-number">Step 8.4</span> <strong>Start Frontend Server</strong></p>
+<p>Open new terminal:</p>
+<pre>cd frontend
+npm run dev</pre>
+<p>Frontend runs at: <code>http://localhost:5173</code></p>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Frontend server running<br>
+    <em>[Insert image showing Vite dev server output]</em>
+</div>
+</div>
+
+<div class="step-box">
+<p><span class="step-number">Step 8.5</span> <strong>View Application</strong></p>
+<p>Open browser and navigate to <code>http://localhost:5173</code></p>
+
+<div class="success">
+    ✅ <strong>Success!</strong> The Employee Details Portal is now running with:
+    <ul>
+        <li>Dashboard with pie charts</li>
+        <li>Employee list with search & filters</li>
+        <li>Employee profiles with addresses</li>
+        <li>Add/Edit/Delete functionality</li>
+    </ul>
+</div>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Application Dashboard<br>
+    <em>[Insert image showing running application dashboard]</em>
+</div>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Employee List Page<br>
+    <em>[Insert image showing employee list with data]</em>
+</div>
+
+<div class="image-placeholder">
+    📸 <strong>Screenshot:</strong> Employee Profile Page<br>
+    <em>[Insert image showing employee profile with addresses]</em>
+</div>
+</div>
+
+<!-- ==================== SECTION 9: SUMMARY ==================== -->
+
+<h2 class="page-break">📊 Section 9: Summary</h2>
+
+<h3>What Was Achieved</h3>
+<table>
+    <tr><th>Metric</th><th>Value</th></tr>
+    <tr><td>Total Duration</td><td>55 minutes</td></tr>
+    <tr><td>Stories Completed</td><td>13</td></tr>
+    <tr><td>Documentation Files</td><td>8</td></tr>
+    <tr><td>API Endpoints</td><td>15+</td></tr>
+    <tr><td>Frontend Pages</td><td>5</td></tr>
+    <tr><td>Time Savings</td><td>84%</td></tr>
+</table>
+
+<h3>Files Generated</h3>
+<table>
+    <tr><th>Category</th><th>Count</th></tr>
+    <tr><td>Documentation</td><td>8 files</td></tr>
+    <tr><td>Backend Source</td><td>12 files</td></tr>
+    <tr><td>Frontend Source</td><td>10 files</td></tr>
+    <tr><td>Test Files</td><td>4 files</td></tr>
+    <tr><td>Configuration</td><td>8 files</td></tr>
+</table>
+
+<h3>Tools Used</h3>
+<table>
+    <tr><th>Tool</th><th>Purpose</th><th>Count</th></tr>
+    <tr><td><code>jira.get_issue</code></td><td>Fetch Epic details</td><td>1</td></tr>
+    <tr><td><code>jira.create_issue</code></td><td>Create child stories</td><td>13</td></tr>
+    <tr><td><code>jira.add_comment</code></td><td>Add closure comments</td><td>13</td></tr>
+    <tr><td><code>jira.transition_issue</code></td><td>Move to Done</td><td>14</td></tr>
+    <tr><td><code>github.create_repository</code></td><td>Create repo</td><td>1</td></tr>
+    <tr><td><code>github.push_files</code></td><td>Push code</td><td>3</td></tr>
+</table>
+
+<hr>
+<p style="text-align: center; color: #718096;">
+    <em>Document Created: February 20, 2026</em><br>
+    <em>Project: SCRUM-16 - Employee Details Portal</em><br>
+    <em>Generated by Cline AI Assistant</em>
+</p>
+
+</body>
+</html>

@@ -1,11 +1,14 @@
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 const { initSchema } = require('./database/init');
 
 // Import routes
 const employeesRouter = require('./routes/employees');
 const addressesRouter = require('./routes/addresses');
 const analyticsRouter = require('./routes/analytics');
+const authRouter = require('./routes/auth');
+const leavesRouter = require('./routes/leaves');
 
 // Create Express app
 const app = express();
@@ -26,9 +29,11 @@ if (process.env.NODE_ENV !== 'production') {
 initSchema();
 
 // API Routes
+app.use('/auth', authRouter);
 app.use('/api/employees', employeesRouter);
 app.use('/api/addresses', addressesRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/leaves', leavesRouter);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

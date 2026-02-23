@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>MCP Configuration Guide - One Page Setup</title>
+    <style>
+        body { font-family: Calibri, Arial, sans-serif; margin: 30px; font-size: 11pt; }
+        h1 { color: #2E4057; font-size: 16pt; margin-bottom: 5px; }
+        h2 { color: #048A81; font-size: 12pt; margin-top: 15px; margin-bottom: 5px; border-bottom: 1px solid #048A81; }
+        table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 10pt; }
+        th, td { border: 1px solid #ddd; padding: 5px; text-align: left; }
+        th { background-color: #2E4057; color: white; }
+        code { background-color: #f0f0f0; padding: 1px 4px; font-family: Consolas, monospace; font-size: 9pt; }
+        pre { background-color: #f4f4f4; padding: 8px; font-size: 9pt; margin: 5px 0; font-family: Consolas, monospace; }
+        .two-col { display: flex; gap: 15px; }
+        .col { flex: 1; }
+    </style>
+</head>
+<body>
+
+<h1>MCP Configuration Guide for Cline AI + Jira + GitHub Integration</h1>
+
+<div class="two-col">
+<div class="col">
+<h2>1. Jira API Token</h2>
+<p><b>Generate at:</b> <code>https://id.atlassian.com/manage-profile/security/api-tokens</code></p>
+<p><b>Steps:</b> Create API token → Copy (shown once only)</p>
+
+<h2>2. GitHub Personal Access Token</h2>
+<p><b>Generate at:</b> GitHub → Settings → Developer Settings → Personal Access Tokens</p>
+<p><b>Required Scopes:</b> <code>repo</code>, <code>workflow</code></p>
+</div>
+
+<div class="col">
+<h2>3. MCP Settings File Location</h2>
+<pre>%APPDATA%\Code\User\globalStorage\
+saoudrizwan.claude-dev\settings\
+cline_mcp_settings.json</pre>
+</div>
+</div>
+
+<h2>4. Complete MCP Configuration (cline_mcp_settings.json)</h2>
+<pre>{
+  "mcpServers": {
+    "jira": {
+      "command": "node",
+      "args": ["C:\\path\\to\\jira-full-server\\build\\index.js"],
+      "env": {
+        "JIRA_HOST": "https://YOUR-INSTANCE.atlassian.net",
+        "JIRA_EMAIL": "your-email@example.com",
+        "JIRA_API_TOKEN": "your-jira-api-token-here"
+      },
+      "disabled": false
+    },
+    "github": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_your-github-token-here"
+      },
+      "disabled": false
+    }
+  }
+}</pre>
+
+<h2>5. Available MCP Tools</h2>
+<div class="two-col">
+<div class="col">
+<table>
+<tr><th colspan="2">Jira MCP Server Tools</th></tr>
+<tr><td><code>get_issue</code></td><td>Get issue by key (SCRUM-16)</td></tr>
+<tr><td><code>create_issue</code></td><td>Create Story/Task/Bug under Epic</td></tr>
+<tr><td><code>add_comment</code></td><td>Add closure comments</td></tr>
+<tr><td><code>list_transitions</code></td><td>Get available status transitions</td></tr>
+<tr><td><code>transition_issue</code></td><td>Move to Done (ID: 41)</td></tr>
+<tr><td><code>jql_search</code></td><td>Search with JQL query</td></tr>
+</table>
+</div>
+<div class="col">
+<table>
+<tr><th colspan="2">GitHub MCP Server Tools</th></tr>
+<tr><td><code>create_repository</code></td><td>Create new repo</td></tr>
+<tr><td><code>push_files</code></td><td>Push multiple files</td></tr>
+<tr><td><code>create_branch</code></td><td>Create feature branch</td></tr>
+<tr><td><code>create_pull_request</code></td><td>Create PR</td></tr>
+<tr><td><code>merge_pull_request</code></td><td>Merge PR</td></tr>
+<tr><td><code>get_file_contents</code></td><td>Read file from repo</td></tr>
+</table>
+</div>
+</div>
+
+<h2>6. Workflow Summary</h2>
+<table>
+<tr><th>Step</th><th>Action</th><th>MCP Tool Used</th></tr>
+<tr><td>1</td><td>Give Epic ID (e.g., SCRUM-16)</td><td><code>jira.get_issue</code></td></tr>
+<tr><td>2</td><td>AI creates child stories</td><td><code>jira.create_issue</code> (with parentKey)</td></tr>
+<tr><td>3</td><td>AI generates code & docs</td><td>Cline <code>write_to_file</code></td></tr>
+<tr><td>4</td><td>Create GitHub repo</td><td><code>github.create_repository</code></td></tr>
+<tr><td>5</td><td>Push all code</td><td><code>github.push_files</code></td></tr>
+<tr><td>6</td><td>Add closure comments to stories</td><td><code>jira.add_comment</code></td></tr>
+<tr><td>7</td><td>Transition stories to Done</td><td><code>jira.transition_issue</code></td></tr>
+</table>
+
+<h2>7. Prerequisites Checklist</h2>
+<table>
+<tr><td>☐</td><td>VS Code with Cline extension installed</td></tr>
+<tr><td>☐</td><td>Node.js installed (for Jira MCP server)</td></tr>
+<tr><td>☐</td><td>Jira Cloud account + API token</td></tr>
+<tr><td>☐</td><td>GitHub account + Personal Access Token</td></tr>
+<tr><td>☐</td><td>Jira MCP server built (<code>npm run build</code> in jira-full-server)</td></tr>
+<tr><td>☐</td><td>cline_mcp_settings.json configured with correct paths/tokens</td></tr>
+<tr><td>☐</td><td>Restart VS Code after config changes</td></tr>
+<tr><td>☐</td><td>Verify both servers show "connected" in Cline</td></tr>
+</table>
+
+</body>
+</html>
