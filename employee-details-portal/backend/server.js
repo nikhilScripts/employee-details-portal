@@ -3,6 +3,9 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 
+const { validateEmployee, validateEmployeeId } = require('./middleware/validation');
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -10,6 +13,12 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Request logging
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
 
 // In-memory data store (will be replaced with database in Stage 3)
 let employees = [
@@ -55,8 +64,8 @@ app.get('/api/employees', (req, res) => {
 });
 
 // GET single employee by ID
-app.get('/api/employees/:id', (req, res) => {
-  const employee = employees.find(emp => emp.id === parseInt(req.params.id));
+app.get('/api/employees/:id', validateEmployeeId, (req, res) => {
+  const employee = employees.find(emp => emp.id === req.employeeId);
   
   if (!employee) {
     return res.status(404).json({
@@ -72,7 +81,7 @@ app.get('/api/employees/:id', (req, res) => {
 });
 
 // POST create new employee
-app.post('/api/employees', (req, res) => {
+app.post('/api/employees', validateEmployee, (req, res) => {
   const { firstName, lastName, email, department, position, joinDate } = req.body;
   
   // Basic validation
@@ -103,8 +112,8 @@ app.post('/api/employees', (req, res) => {
 });
 
 // PUT update employee
-app.put('/api/employees/:id', (req, res) => {
-  const employeeIndex = employees.findIndex(emp => emp.id === parseInt(req.params.id));
+app.put('/api/employees/:id', validateEmployeeId, (req, res) => {
+  const employeeIndex = employees.findIndex(emp => emp.id === req.employeeId);
   
   if (employeeIndex === -1) {
     return res.status(404).json({
@@ -133,8 +142,8 @@ app.put('/api/employees/:id', (req, res) => {
 });
 
 // DELETE employee
-app.delete('/api/employees/:id', (req, res) => {
-  const employeeIndex = employees.findIndex(emp => emp.id === parseInt(req.params.id));
+app.delete('/api/employees/:id', validateEmployeeId, (req, res) => {
+  const employeeIndex = employees.findIndex(emp => emp.id === req.employeeId);
   
   if (employeeIndex === -1) {
     return res.status(404).json({
@@ -152,15 +161,11 @@ app.delete('/api/employees/:id', (req, res) => {
   });
 });
 
+// 404 handler for undefined routes
+app.use(notFoundHandler);
+
 // Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    message: 'Internal server error',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
-});
+app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
