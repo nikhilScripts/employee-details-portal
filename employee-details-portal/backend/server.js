@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const { validateEmployee, validateEmployeeId } = require('./middleware/validation');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+const db = require('./database/dbManager');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,27 +21,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// In-memory data store (will be replaced with database in Stage 3)
-let employees = [
-  {
-    id: 1,
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    department: 'Engineering',
-    position: 'Software Engineer',
-    joinDate: '2020-01-15'
-  },
-  {
-    id: 2,
-    firstName: 'Jane',
-    lastName: 'Smith',
-    email: 'jane.smith@example.com',
-    department: 'Marketing',
-    position: 'Marketing Manager',
-    joinDate: '2019-03-20'
-  }
-];
+// Initialize database on startup
+db.load().then(() => {
+  console.log('Database loaded successfully');
+}).catch(err => {
+  console.error('Error loading database:', err);
+});
 
 // Routes
 app.get('/', (req, res) => {
@@ -55,110 +41,135 @@ app.get('/', (req, res) => {
 });
 
 // GET all employees
-app.get('/api/employees', (req, res) => {
-  res.json({
-    success: true,
-    count: employees.length,
-    data: employees
-  });
+app.get('/api/employees', async (req, res, next) => {
+  try {
+    const employees = await db.getAllEmployees();
+    res.json({
+      success: true,
+      count: employees.length,
+      data: employees
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // GET single employee by ID
-app.get('/api/employees/:id', validateEmployeeId, (req, res) => {
-  const employee = employees.find(emp => emp.id === req.employeeId);
-  
-  if (!employee) {
-    return res.status(404).json({
-      success: false,
-      message: 'Employee not found'
+app.get('/api/employees/:id', validateEmployeeId, async (req, res, next) => {
+  try {
+    const employee = await db.getEmployeeById(req.employeeId);
+    
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: 'Employee not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: employee
     });
+  } catch (error) {
+    next(error);
   }
-  
-  res.json({
-    success: true,
-    data: employee
-  });
 });
 
 // POST create new employee
-app.post('/api/employees', validateEmployee, (req, res) => {
-  const { firstName, lastName, email, department, position, joinDate } = req.body;
-  
-  // Basic validation
-  if (!firstName || !lastName || !email) {
-    return res.status(400).json({
-      success: false,
-      message: 'First name, last name, and email are required'
+app.post('/api/employees', validateEmployee, async (req, res, next) => {
+  try {
+    const { firstName, lastName, email, department, position, joinDate } = req.body;
+    
+    // Check if email already exists
+    const emailExists = await db.emailExists(email);
+    if (emailExists) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email already exists'
+      });
+    }
+    
+    const newEmployee = await db.createEmployee({
+      firstName,
+      lastName,
+      email,
+      department: department || '',
+      position: position || ''  ,
+      joinDate
     });
+    
+    res.status(201).json({
+      success: true,
+      message: 'Employee created successfully',
+      data: newEmployee
+    });
+  } catch (error) {
+    next(error);
   }
-  
-  const newEmployee = {
-    id: employees.length > 0 ? Math.max(...employees.map(e => e.id)) + 1 : 1,
-    firstName,
-    lastName,
-    email,
-    department: department || '',
-    position: position || '',
-    joinDate: joinDate || new Date().toISOString().split('T')[0]
-  };
-  
-  employees.push(newEmployee);
-  
-  res.status(201).json({
-    success: true,
-    message: 'Employee created successfully',
-    data: newEmployee
-  });
 });
 
 // PUT update employee
-app.put('/api/employees/:id', validateEmployeeId, (req, res) => {
-  const employeeIndex = employees.findIndex(emp => emp.id === req.employeeId);
-  
-  if (employeeIndex === -1) {
-    return res.status(404).json({
-      success: false,
-      message: 'Employee not found'
+app.put('/api/employees/:id', validateEmployeeId, async (req, res, next) => {
+  try {
+    const { firstName, lastName, email, department, position, joinDate } = req.body;
+    
+    // Check if email exists for different employee
+    if (email) {
+      const emailExists = await db.emailExists(email, req.employeeId);
+      if (emailExists) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email already exists'
+        });
+      }
+    }
+    
+    const updatedEmployee = await db.updateEmployee(req.employeeId, {
+      firstName,
+      lastName,
+      email,
+      department,
+      position,
+      joinDate
     });
+    
+    if (!updatedEmployee) {
+      return res.status(404).json({
+        success: false,
+        message: 'Employee not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Employee updated successfully',
+      data: updatedEmployee
+    });
+  } catch (error) {
+    next(error);
   }
-  
-  const { firstName, lastName, email, department, position, joinDate } = req.body;
-  
-  employees[employeeIndex] = {
-    ...employees[employeeIndex],
-    firstName: firstName || employees[employeeIndex].firstName,
-    lastName: lastName || employees[employeeIndex].lastName,
-    email: email || employees[employeeIndex].email,
-    department: department !== undefined ? department : employees[employeeIndex].department,
-    position: position !== undefined ? position : employees[employeeIndex].position,
-    joinDate: joinDate || employees[employeeIndex].joinDate
-  };
-  
-  res.json({
-    success: true,
-    message: 'Employee updated successfully',
-    data: employees[employeeIndex]
-  });
 });
 
 // DELETE employee
-app.delete('/api/employees/:id', validateEmployeeId, (req, res) => {
-  const employeeIndex = employees.findIndex(emp => emp.id === req.employeeId);
-  
-  if (employeeIndex === -1) {
-    return res.status(404).json({
-      success: false,
-      message: 'Employee not found'
+app.delete('/api/employees/:id', validateEmployeeId, async (req, res, next) => {
+  try {
+    const deletedEmployee = await db.deleteEmployee(req.employeeId);
+    
+    if (!deletedEmployee) {
+      return res.status(404).json({
+        success: false,
+        message: 'Employee not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Employee deleted successfully',
+      data: deletedEmployee
     });
+  } catch (error) {
+    next(error);
   }
-  
-  const deletedEmployee = employees.splice(employeeIndex, 1)[0];
-  
-  res.json({
-    success: true,
-    message: 'Employee deleted successfully',
-    data: deletedEmployee
-  });
 });
 
 // 404 handler for undefined routes
